@@ -1,42 +1,38 @@
-// require("dotenv").config();
-// const express = require("express");
-// const mongoose = require("mongoose");
-
-
-// const PORT = process.env.PORT || 3002;
-// const uri = process.env.MONGO_URL;
-
-// const app= express();
-// app.listen(3002,()=>{
-//     console.log("app started");
-//     mongoose.connect(uri);
-// });
-
-
-
 require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
+const apiRoutes = require("./routes/api");
 
 const app = express();
+const PORT = Number(process.env.PORT) || 3002;
+const mongoUrl = process.env.MONGO_URL;
 
-const PORT = process.env.PORT || 3002;
-const uri = process.env.MONGO_URL;
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-// ✅ Check if URI is coming
-console.log("Mongo URI:", uri);
+// Mount API routes
+app.use("/api", apiRoutes);
 
-// ✅ Connect to MongoDB FIRST
-mongoose.connect(uri)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
+async function startServer() {
+  if (!mongoUrl) {
+    console.error("Missing MONGO_URL in backend/.env");
+    process.exit(1);
+  }
 
-    // ✅ Start server AFTER DB connects
+  try {
+    await mongoose.connect(mongoUrl);
+    console.log("MongoDB connected");
+
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`Backend listening on http://localhost:${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.log("❌ MongoDB Error:", err);
-  });
+  } catch (error) {
+    console.error("MongoDB connection failed:", error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
